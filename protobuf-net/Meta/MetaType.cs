@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Text;
 using ProtoBuf.Serializers;
+using System.Globalization;
 
 
 #if FEAT_IKVM
@@ -1806,7 +1807,7 @@ namespace ProtoBuf.Meta
                         {
                             object enumVal;
 #if WINRT || PORTABLE || CF || FX11 || NETSTANDARD1_3 || NETSTANDARD1_4
-                            enumVal = Convert.ChangeType(field.GetValue(null), Enum.GetUnderlyingType(field.FieldType));
+                            enumVal = Convert.ChangeType(field.GetValue(null), Enum.GetUnderlyingType(field.FieldType), CultureInfo.InvariantCulture);
 #else
                             enumVal = field.GetRawConstantValue();
 #endif

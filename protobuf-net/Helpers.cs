@@ -220,7 +220,11 @@ namespace ProtoBuf
         }
         internal static MethodInfo GetStaticMethod(Type declaringType, string name, Type[] parameterTypes)
         {
-           return declaringType.GetMethod(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, parameterTypes, null);
+#if PORTABLE
+            throw new InvalidOperationException("Unable to GetMethod with ParameterTypes in PCL version");
+#else
+            return declaringType.GetMethod(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, parameterTypes, null);
+#endif
         }
         internal static MethodInfo GetInstanceMethod(Type declaringType, string name, Type[] types)
         {
@@ -628,6 +632,8 @@ namespace ProtoBuf
             {
                 return segment.Array;
             }
+#elif PORTABLE
+            throw new InvalidOperationException("Unable to obtain underlying MemoryStream buffer in PCL version");
 #else
             return ms.GetBuffer();
 #endif
