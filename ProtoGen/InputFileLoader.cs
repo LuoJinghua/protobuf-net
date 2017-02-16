@@ -54,8 +54,34 @@ namespace ProtoBuf.CodeGenerator
             }
             return Path.Combine(Path.GetDirectoryName(loaderPath), path);   
         }
+
+		public static bool IsUnix
+		{
+			get
+			{
+				int p = (int)System.Environment.OSVersion.Platform;
+				return (p == 4 || p == 6 || p == 128);
+			}
+		}
+
         public static string GetProtocPath(out string folder)
         {
+			if (IsUnix)
+			{
+				const string
+					kLocalLocation = "/usr/local/bin/protoc",
+					kGlobalLocation = "/usr/bin/protoc";
+
+				folder = null;
+
+				if (File.Exists (kLocalLocation))
+				{
+					return kLocalLocation;
+				}
+
+				return kGlobalLocation;
+			}
+
             const string Name = "protoc.exe";
             string lazyPath = InputFileLoader.CombinePathFromAppRoot(Name);
             if (File.Exists(lazyPath))
@@ -108,17 +134,28 @@ namespace ProtoBuf.CodeGenerator
             string tmpFolder = null, protocPath = null;
             try
             {
+				string cmd;
+				if (IsUnix == false)
+					cmd = string.Format(@"""--descriptor_set_out={0}"" ""--proto_path={1}"" ""--proto_path={2}"" ""--proto_path={3}"" --error_format=gcc ""{4}"" {5}",
+						 tmp, // output file
+						 Path.GetDirectoryName(path), // primary search path
+						 Environment.CurrentDirectory, // primary search path
+						 Path.GetDirectoryName(protocPath), // secondary search path
+						 Path.Combine(Environment.CurrentDirectory, path), // input file
+						 string.Join(" ", args)); // extra args
+				else
+					cmd = string.Format(@"""--descriptor_set_out={0}"" ""--proto_path={1}"" ""--proto_path={2}"" ""--proto_path={3}"" --error_format=gcc ""{4}"" {5}",
+						tmp, // output file
+						Environment.CurrentDirectory, // primary search path
+						Path.GetDirectoryName(protocPath), // secondary search path
+						Path.GetDirectoryName(path), // tertiary search path
+						Path.Combine(Environment.CurrentDirectory, path), // input file
+						string.Join(" ", args) // extra args
+						);
                 protocPath = GetProtocPath(out tmpFolder);
                 ProcessStartInfo psi = new ProcessStartInfo(
                     protocPath,
-                    string.Format(@"""--descriptor_set_out={0}"" ""--proto_path={1}"" ""--proto_path={2}"" ""--proto_path={3}"" --error_format=gcc ""{4}"" {5}",
-                             tmp, // output file
-                             Path.GetDirectoryName(path), // primary search path
-                             Environment.CurrentDirectory, // primary search path
-                             Path.GetDirectoryName(protocPath), // secondary search path
-                             Path.Combine(Environment.CurrentDirectory, path), // input file
-                             string.Join(" ", args) // extra args
-                    )
+                    cmd
                 );
                 Debug.WriteLine(psi.FileName + " " + psi.Arguments, "protoc");
 
