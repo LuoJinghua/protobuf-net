@@ -68,18 +68,25 @@ namespace ProtoBuf.CodeGenerator
         {
 			if (IsUnix)
 			{
-				const string
-					kLocalLocation = "/usr/local/bin/protoc",
-					kGlobalLocation = "/usr/bin/protoc";
-
 				folder = null;
 
-				if (File.Exists (kLocalLocation))
+				// protogen.exe can be run with mono on Mac/Unix (cool mono)
+				// but the embedded protoc.exe cannot be executed, as it's not a .net exe
+				// workaround 1: ln -s /opt/local/bin/protoc protoc.exe
+				// workaround 2: search the protoc in following bin folder
+				string[] UnixProtoc = {
+					"/usr/bin/protoc",
+					"/usr/local/bin/protoc",
+					"/opt/local/bin/protoc"
+				};
+				for (int i = 0; i < UnixProtoc.Length; i++)
 				{
-					return kLocalLocation;
+					if (File.Exists(UnixProtoc[i]))
+					{
+						return UnixProtoc[i];
+					}
 				}
-
-				return kGlobalLocation;
+				return UnixProtoc[0];
 			}
 
             const string Name = "protoc.exe";
@@ -88,22 +95,6 @@ namespace ProtoBuf.CodeGenerator
             {   // use protoc.exe from the existing location (faster)
                 folder = null;
                 return lazyPath;
-            }
-
-            // protogen.exe can be run with mono on Mac/Unix (cool mono)
-            // but the embedded protoc.exe cannot be executed, as it's not a .net exe
-            // workaround 1: ln -s /opt/local/bin/protoc protoc.exe
-            // workaround 2: search the protoc in following bin folder
-            string[] UnixProtoc = {
-                "/usr/bin/protoc",
-                "/usr/local/bin/protoc",
-                "/opt/local/bin/protoc"
-            };
-            for(int i=0; i<UnixProtoc.Length; i++) {
-                if(File.Exists(UnixProtoc[i])) {
-                    folder = null;
-                    return UnixProtoc[i];
-                }
             }
             
             folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("n"));
@@ -159,7 +150,7 @@ namespace ProtoBuf.CodeGenerator
                 );
                 Debug.WriteLine(psi.FileName + " " + psi.Arguments, "protoc");
 
-                psi.CreateNoWindow = true;
+				psi.CreateNoWindow = true;
                 psi.WindowStyle = ProcessWindowStyle.Hidden;
                 psi.WorkingDirectory = Environment.CurrentDirectory;
                 psi.UseShellExecute = false;
