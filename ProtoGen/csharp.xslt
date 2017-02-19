@@ -18,7 +18,8 @@
   <xsl:param name="clientProxy"/>
   <xsl:param name="defaultNamespace"/>
   <xsl:param name="import"/>
-  
+  <xsl:param name="defaultEnumPassthru"/>
+
   <xsl:key name="fieldNames" match="//FieldDescriptorProto" use="name"/>
   <xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 
@@ -33,6 +34,7 @@
   <xsl:variable name="optionFullFramework" select="not($lightFramework='true')"/>
   <xsl:variable name="optionAsynchronous" select="$asynchronous='true'"/>
   <xsl:variable name="optionClientProxy" select="$clientProxy='true'"/>
+  <xsl:variable name="optionDefaultEnumPassthru" select="$defaultEnumPassthru='true'"/>
 
   <xsl:template match="/">
     <xsl:text disable-output-escaping="yes">//------------------------------------------------------------------------------
@@ -195,7 +197,7 @@ namespace <xsl:value-of select="translate($namespace,':-/\','__..')"/>
   </xsl:template>
 
   <xsl:template match="EnumDescriptorProto">
-    [global::ProtoBuf.ProtoContract(Name=@"<xsl:value-of select="name"/>")]
+    [global::ProtoBuf.ProtoContract(Name=@"<xsl:value-of select="name"/>"<xsl:if test="$optionDefaultEnumPassthru">, EnumPassthru = true</xsl:if>)]
     <xsl:if test="$optionDataContract">[global::System.Runtime.Serialization.DataContract(Name=@"<xsl:value-of select="name"/>")]
     </xsl:if>
     <xsl:if test="$optionXml">[global::System.Xml.Serialization.XmlType(TypeName=@"<xsl:value-of select="name"/>")]

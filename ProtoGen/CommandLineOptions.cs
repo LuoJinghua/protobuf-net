@@ -53,7 +53,7 @@ namespace ProtoBuf.CodeGenerator
         }
 
         private string template = TemplateCSharp, outPath = "", defaultNamespace;
-        private bool showLogo = true, showHelp, writeErrorsToFile;
+        private bool showLogo = true, showHelp, writeErrorsToFile, defaultEnumPassthru;
         private readonly List<string> inPaths = new List<string>();
 		private readonly List<string> importPaths = new List<string>();
         private readonly List<string> args = new List<string>();
@@ -71,8 +71,9 @@ namespace ProtoBuf.CodeGenerator
         public List<string> InPaths { get { return inPaths; } }
 		public List<string> ImportPaths { get { return importPaths; } }
         public List<string> Arguments { get { return args; } }
+		public bool DefaultEnumPassthru { get { return defaultEnumPassthru; } set { defaultEnumPassthru = value; } }
 
-        private readonly TextWriter messageOutput;
+		private readonly TextWriter messageOutput;
 
         public static CommandLineOptions Parse(TextWriter messageOutput, params string[] args)
         {
@@ -124,6 +125,10 @@ namespace ProtoBuf.CodeGenerator
                 {
                     options.WriteErrorsToFile = true;
                 }
+				else if (arg == "-enumPassthru")
+				{
+					options.DefaultEnumPassthru = true;
+				}
                 else if (arg.StartsWith("-w:"))
                 {
                     options.WorkingDirectory = arg.Substring(3).Trim();
@@ -285,6 +290,10 @@ namespace ProtoBuf.CodeGenerator
                 {
                     options.XsltOptions.AddParam("defaultNamespace", "", options.DefaultNamespace);
                 }
+				if (options.DefaultEnumPassthru)
+				{
+					options.XsltOptions.AddParam("defaultEnumPassthru", "", options.DefaultEnumPassthru);
+				}
                 xslt.Transform(reader, options.XsltOptions, writer);
             }
             return sb.ToString();
